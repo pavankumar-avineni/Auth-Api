@@ -18,6 +18,7 @@ function authMiddleware(req, res, next) {
 
     // 4. Save user id for next use
     req.userId = decoded.userId;
+    req.userRole = decoded.role;
 
     // 5. Go to next step (route)
     next();

@@ -2,7 +2,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.js");
+const User = require("../models/User.js");
 
 // 2. Create router
 const router = express.Router();
@@ -23,7 +23,8 @@ router.post("/register", async (req, res) => {
   const newUser = new User({
     name: name,
     email: email,
-    password: hashedPassword
+    password: hashedPassword,
+    role: req.body.role || "user"
   });
 
   // 6. Save user to database
@@ -61,7 +62,9 @@ router.post("/login", async (req, res) => {
 
   // 11. Create token
   const token = jwt.sign(
-    { userId: user._id },
+    { userId: user._id, 
+      role: user.role
+    },
     process.env.JWT_SECRET
   );
 
