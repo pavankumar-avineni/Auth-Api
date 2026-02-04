@@ -3,6 +3,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User.js");
+const limiter = require("../middleware/rateLimiter");
 
 // 2. Create router
 const router = express.Router();
@@ -38,7 +39,7 @@ router.post("/register", async (req, res) => {
 
 
 // ================== LOGIN ==================
-router.post("/login", async (req, res) => {
+router.post("/login", limiter, async (req, res) => {
 
   // 8. Get login data
   const email = req.body.email;

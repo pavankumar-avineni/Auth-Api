@@ -5,6 +5,8 @@ require("dotenv").config();
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
 
+const limiter = require("./middleware/rateLimiter");
+//app.use(limiter);
 
 
 const app = express();
@@ -15,6 +17,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(() => console.log("MongoDB error"));
 
 app.use("/api", authRoutes);
+//app.use(limiter);
 app.use("/api", profileRoutes);
 
 app.listen(3000, () => {
