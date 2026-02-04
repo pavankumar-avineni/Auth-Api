@@ -40,28 +40,6 @@ This is a **production-style backend project**, not just a basic demo.
 
 ---
 
-## 📁 Project Structure
-
-auth-api/
-│
-├── server.js
-├── .env
-│
-├── models/
-│ └── User.js
-│
-├── routes/
-│ ├── auth.js
-│ └── profile.js
-│
-├── middleware/
-│ ├── logger.js
-│ ├── rateLimiter.js
-│ ├── authMiddleware.js
-│ ├── roleMiddleware.js
-│ └── errorHandler.js
-
-
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the repository
