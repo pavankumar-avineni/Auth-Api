@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const helmet = require("helmet");
 
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
@@ -10,7 +11,9 @@ const limiter = require("./middleware/rateLimiter");
 
 
 const app = express();
+app.use(helmet());
 app.use(express.json());
+
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
