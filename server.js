@@ -39,6 +39,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //file upload
 app.use("/uploads", express.static("uploads"));
+console.log(process.env.CLOUDINARY_CLOUD_NAME);
+
 
 // 🚀 Start server
 app.listen(3000, () => {

@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "user"
+  },
+  profileImage: {
+    type: String   // Cloudinary URL
+  },
+  profileImageId: {
+    type: String   // Cloudinary public_id
   }
 });
 

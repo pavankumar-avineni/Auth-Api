@@ -2,6 +2,9 @@ const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const upload = require("../middleware/upload");
+const cloudinary = require("../config/cloudinary");
+const User = require("../models/User");
+
 
 const router = express.Router();
 
@@ -58,27 +61,45 @@ router.get("/admin", authMiddleware, roleMiddleware("admin"), (req, res) => {
 router.post(
   "/profile/upload",
   authMiddleware,
-  (req, res, next) => {
-    upload.single("profileImage")(req, res, function (err) {
-      if (err) {
-        return res.status(400).json({
-          message: err.message
-        });
+  upload.single("profileImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
       }
 
-      if (!req.file) {
-        return res.status(400).json({
-          message: "No file uploaded"
-        });
-      }
+      // Upload to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "profile-images" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+
+      // Save image data in MongoDB
+      const user = await User.findByIdAndUpdate(
+        req.userId,
+        {
+          profileImage: result.secure_url,
+          profileImageId: result.public_id
+        },
+        { new: true }
+      );
 
       res.json({
         message: "Profile image uploaded successfully",
-        file: req.file
+        profileImage: user.profileImage
       });
-    });
+
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
-)
+);
 
 
 module.exports = router;
