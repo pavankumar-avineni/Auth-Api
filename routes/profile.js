@@ -1,6 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const upload = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -52,5 +53,32 @@ router.get("/admin", authMiddleware, roleMiddleware("admin"), (req, res) => {
     message: "Admin dashboard"
   });
 });
+
+// Upload profile picture with error handling
+router.post(
+  "/profile/upload",
+  authMiddleware,
+  (req, res, next) => {
+    upload.single("profileImage")(req, res, function (err) {
+      if (err) {
+        return res.status(400).json({
+          message: err.message
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No file uploaded"
+        });
+      }
+
+      res.json({
+        message: "Profile image uploaded successfully",
+        file: req.file
+      });
+    });
+  }
+)
+
 
 module.exports = router;

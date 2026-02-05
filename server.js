@@ -37,6 +37,9 @@ app.use(errorHandler);
 // swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+//file upload
+app.use("/uploads", express.static("uploads"));
+
 // 🚀 Start server
 app.listen(3000, () => {
   console.log("Server running on port 3000");
