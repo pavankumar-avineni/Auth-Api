@@ -1,10 +1,8 @@
 const multer = require("multer");
 
-const upload = multer({
+module.exports = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 2 * 1024 * 1024 // 2MB
-  },
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (req, file, cb) => {
     if (
       file.mimetype === "image/jpeg" ||
@@ -12,9 +10,7 @@ const upload = multer({
     ) {
       cb(null, true);
     } else {
-      cb(new Error("Only JPG and PNG images allowed"));
+      cb(new Error("Only JPG/PNG allowed"));
     }
   }
 });
-
-module.exports = upload;

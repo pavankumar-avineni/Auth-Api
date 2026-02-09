@@ -1,48 +1,53 @@
+process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED REJECTION:", reason);
+});
+
 const express = require("express");
 const mongoose = require("mongoose");
-const helmet = require("helmet");
+const cors = require("cors");
 require("dotenv").config();
-const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./swagger");
 
 const authRoutes = require("./routes/auth");
-const profileRoutes = require("./routes/profile");
+const fileRoutes = require("./routes/files");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger/swagger");
 
-const logger = require("./middleware/logger");
-const errorHandler = require("./middleware/errorHandler");
-
+// ✅ CREATE APP FIRST
 const app = express();
 
-// 🔐 Secure headers
-app.use(helmet());
-
-// 📝 Logging
-app.use(logger);
-
-// 📦 Parse JSON
+// ✅ THEN USE MIDDLEWARE
+app.use(cors());
 app.use(express.json());
 
-// 🗄️ Database
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(() => console.log("MongoDB error"));
-
-// 🚏 Routes
+// ✅ ROUTES
 app.use("/api", authRoutes);
-app.use("/api", profileRoutes);
+app.use("/api", fileRoutes);
 
-// ❌ Error handler (MUST be last)
-app.use(errorHandler);
-
-// swagger
+// ✅ SWAGGER
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//file upload
-app.use("/uploads", express.static("uploads"));
-console.log(process.env.CLOUDINARY_CLOUD_NAME);
+// ✅ DB CONNECT
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 
 
-// 🚀 Start server
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+
+app.use((err, req, res, next) => {
+  console.error("ERROR:", err);
+
+  res.status(500).json({
+    message: err.message || "Internal Server Error"
+  });
+});
+
+  
+
+
+
+// ✅ START SERVER
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Server running on port ${process.env.PORT || 3000}`);
+  console.log(`Swagger: http://localhost:3000/api-docs`);
 });

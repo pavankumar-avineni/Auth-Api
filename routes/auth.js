@@ -1,19 +1,16 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { body, validationResult } = require("express-validator");
-
 const User = require("../models/User");
 const limiter = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
-// ================= REGISTER =================
 /**
  * @swagger
  * /api/register:
  *   post:
- *     summary: Register a new user
+ *     summary: Register user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -28,57 +25,21 @@ const router = express.Router();
  *             properties:
  *               name:
  *                 type: string
- *                 example: Pavan
  *               email:
  *                 type: string
- *                 example: pavan@test.com
  *               password:
  *                 type: string
- *                 example: 123456
- *               role:
- *                 type: string
- *                 example: user
  *     responses:
  *       200:
- *         description: User registered successfully
- *       400:
- *         description: Validation error
+ *         description: User registered
  */
+router.post("/register", async (req, res) => {
+  const { name, email, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+  await User.create({ name, email, password: hashed });
+  res.json({ message: "Registered" });
+});
 
-router.post(
-  "/register",
-  limiter,
-  [
-    body("name").notEmpty(),
-    body("email").isEmail(),
-    body("password").isLength({ min: 6 })
-  ],
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const hashedPassword = await bcrypt.hash(req.body.password, 10);
-
-      const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: hashedPassword,
-        role: req.body.role || "user"
-      });
-
-      await user.save();
-      res.json({ message: "User registered successfully" });
-
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// ================= LOGIN =================
 /**
  * @swagger
  * /api/login:
@@ -97,45 +58,23 @@ router.post(
  *             properties:
  *               email:
  *                 type: string
- *                 example: user@test.com
  *               password:
  *                 type: string
- *                 example: 123456
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login success
  */
-router.post(
-  "/login",
-  limiter,
-  [
-    body("email").isEmail(),
-    body("password").notEmpty()
-  ],
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
+router.post("/login", limiter, async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) return res.json({ message: "User not found" });
 
-      const user = await User.findOne({ email: req.body.email });
-      if (!user) throw new Error("User not found");
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) return res.json({ message: "Wrong password" });
 
-      const match = await bcrypt.compare(req.body.password, user.password);
-      if (!match) throw new Error("Wrong password");
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+  res.json({ token });
+});
 
-      const token = jwt.sign(
-        { userId: user._id, role: user.role },
-        process.env.JWT_SECRET
-      );
-
-      res.json({ message: "Login successful", token });
-
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 
 module.exports = router;

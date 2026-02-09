@@ -4,6 +4,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 const upload = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 const User = require("../models/User");
+const File = require("../models/File");
 
 
 const router = express.Router();
@@ -80,19 +81,18 @@ router.post(
         stream.end(req.file.buffer);
       });
 
-      // Save image data in MongoDB
-      const user = await User.findByIdAndUpdate(
-        req.userId,
-        {
-          profileImage: result.secure_url,
-          profileImageId: result.public_id
-        },
-        { new: true }
-      );
+      // Save file info in DB
+      const file = await File.create({
+        user: req.userId,
+        fileUrl: result.secure_url,
+        publicId: result.public_id,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size
+      });
 
       res.json({
-        message: "Profile image uploaded successfully",
-        profileImage: user.profileImage
+        message: "File uploaded successfully",
+        file
       });
 
     } catch (error) {
@@ -100,6 +100,28 @@ router.post(
     }
   }
 );
+
+router.get("/profile/files", authMiddleware, async (req, res) => {
+  const page = Number(req.query.page);
+  const limit = Number(req.query.limit);
+
+  const safePage = page > 0 ? page : 1;
+  const safeLimit = limit > 0 ? limit : 3;
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const files = await File.find({ user: req.userId })
+    .sort({ createdAt: 1 })   // oldest → newest
+    .skip(skip)
+    .limit(safeLimit);
+
+  res.json({
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    files
+  });
+});
 
 
 module.exports = router;
